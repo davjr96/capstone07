@@ -33,33 +33,29 @@
 #
 # Revision $Id$
 
-## Simple talker demo that listens to std_msgs/Strings published 
+## Simple talker demo that published std_msgs/Strings messages
 ## to the 'chatter' topic
 
 import rospy
+from geometry_msgs.msg import Twist
 from std_msgs.msg import String
-from nav_msgs.msg import Odometry
 
-def callback(data):
-    rospy.loginfo(rospy.get_caller_id() + 'I heard %s', data.pose.pose)
-
-def callback_two(data):
-    rospy.loginfo(rospy.get_caller_id() + 'bad odom %s', data.pose.pose)
-
-def listener():
-
-    # In ROS, nodes are uniquely named. If two nodes with the same
-    # name are launched, the previous one is kicked off. The
-    # anonymous=True flag means that rospy will choose a unique
-    # name for our 'listener' node so that multiple listeners can
-    # run simultaneously.
-    rospy.init_node('listener', anonymous=True)
-
-    rospy.Subscriber('odom', Odometry, callback)
-    rospy.Subscriber('compromised_odom', Odometry, callback_two)
-
-    # spin() simply keeps python from exiting until this node is stopped
-    rospy.spin()
+def talker():
+    pub_0 = rospy.Publisher('tb3_0/cmd_vel', Twist, queue_size=10)
+    pub_1 = rospy.Publisher('tb3_1/cmd_vel', Twist, queue_size=10)
+    rospy.init_node('talker', anonymous=True)
+    rate = rospy.Rate(10) # 10hz
+    move_cmd = Twist()
+    move_cmd.linear.x = 0.03
+    while not rospy.is_shutdown():
+        hello_str = "x speed %s" % move_cmd.linear.x
+        rospy.loginfo(hello_str)
+        pub_0.publish(move_cmd)
+        pub_1.publish(move_cmd)
+        rate.sleep()
 
 if __name__ == '__main__':
-    listener()
+    try:
+        talker()
+    except rospy.ROSInterruptException:
+        pass
