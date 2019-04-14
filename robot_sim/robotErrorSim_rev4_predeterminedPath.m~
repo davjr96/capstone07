@@ -17,9 +17,7 @@ oldgamma=0;
 ipaddress = '192.168.8.250';
 rosinit(ipaddress)
 
-pub1 = rospublisher('/tb2_2/mobile_base/commands/velocity') ;
-pub2 = rospublisher('/tb2_3/mobile_base/commands/velocity') ;
-pub3 = rospublisher('/tb2_5/mobile_base/commands/velocity') ;
+pub = rospublisher('/mobile_base/commands/velocity') ;
 
 
 decay = 0.8;
@@ -221,15 +219,7 @@ pause(.000001);
 
 angle_to_travel1 = path1T(dt+1) - path1T(dt)
 rotate(angle_to_travel1 , pub1)
-drive(.25, pub1 )
-
-angle_to_travel2 = path2T(dt+1) - path2T(dt)
-rotate(angle_to_travel2 , pub2)
-drive(.25, pub2 )
-
-angle_to_travel3 = path3T(dt+1) - path3T(dt)
-rotate(angle_to_travel3 , pub3)
-drive(.25, pub3)
+drive(.25, pub )
 
 end
 
