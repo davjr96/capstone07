@@ -2,25 +2,6 @@ clearvars;
 close all;
 numBots = 3;
 
-vicon_sub_2 = rossubscriber('/vicon/turtlebot_2/turtlebot_2');
-vicon_data_2 = receive(vicon_sub_2, 1);
-vicon_data_2.Transform.Translation.X
-vicon_data_2.Transform.Translation.Y
-vicon_data_2.Transform.Rotation.Z
-
-vicon_sub_5 = rossubscriber('/vicon/turtlebot_5/turtlebot_5');
-vicon_data_5 = receive(vicon_sub_5, 1);
-vicon_data_5.Transform.Translation.X
-vicon_data_5.Transform.Translation.Y
-vicon_data_5.Transform.Rotation.Z
-
-vicon_sub_3 = rossubscriber('/vicon/turtlebot_3/turtlebot_3');
-vicon_data_3 = receive(vicon_sub_3, 1);
-vicon_data_3.Transform.Translation.X
-vicon_data_3.Transform.Translation.Y
-vicon_data_3.Transform.Rotation.Z
-
-
 path1X = [];
 path2X = [];
 path3X = [];
@@ -85,25 +66,25 @@ k = 1;
 path.pose = [2 -2 1]';
 path.estimate = [2 -2 1]';
 path.u = [2 2];
-bot(1).pose = [0.1526 -1.5174 pi/2]';
-bot(1).estimate = [0.1526 -1.5175 pi/2]';
+bot(1).pose = [2 0 1]';
+bot(1).estimate = [2 0 1]';
 bot(1).u = [2 2];
-pathbot1.pose = [0.1526 -1.5174 pi/2]';
-pathbot1.estimate = [0.1526 -1.5174 pi/2]';
+pathbot1.pose = [2 -2 1]';
+pathbot1.estimate = [2 -2 1]';
 pathbot1.u = [2 2];
-pathbot2.pose = [0.5421 -2.2795 pi/2]';
-pathbot2.estimate = [0.5421 -2.2795 pi/2]';
+pathbot2.pose = [.0256 .828 1]';
+pathbot2.estimate = [2 -2 1]';
 pathbot2.u = [2 2];
-pathbot3.pose = [-0.1778 -2.3472 pi/2]';
-pathbot3.estimate = [-0.1778 -2.3472 pi/2]';
+pathbot3.pose = [2 -2 1]';
+pathbot3.estimate = [2 -2 1]';
 pathbot3.u = [2 2];
 
-bot(2).pose = [0.5421 -2.2795 pi/2]';
-bot(2).estimate = [0.5421 -2.2795 pi/2]';
+bot(2).pose = [0.5421 -2.279 1]';
+bot(2).estimate = [0.5421 -2.2795 1]';
 bot(2).u = [2 2];
 
-bot(3).pose = [-0.1778 -2.3472 pi/2]';
-bot(3).estimate = [-0.1778 -2.3472 pi/2]';
+bot(3).pose = [3 -2 1]';
+bot(3).estimate = [3 -2 1]';
 bot(3).u = [2 2];
 
 XerrorList = [];
@@ -174,12 +155,6 @@ for i = 1:numBots
     recover(bot(1));
    end
    
-   
-   vicon_data_2 = receive(vicon_sub_2, 1);
-vicon_data_2.Transform.Translation.X
-vicon_data_2.Transform.Translation.Y
-vicon_data_2.Transform.Rotation.Z
-
    %SS(i, t) = bot(i).pose;
    update(bot(i), dt);
    kalman(bot(i), dt);
