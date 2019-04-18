@@ -2,32 +2,12 @@ clearvars;
 close all;
 numBots = 3;
 
-vicon_sub_2 = rossubscriber('/vicon/turtlebot_2/turtlebot_2');
-vicon_data_2 = receive(vicon_sub_2, 1);
-vicon_data_2.Transform.Translation.X
-vicon_data_2.Transform.Translation.Y
-vicon_data_2.Transform.Rotation.Z
-
-vicon_sub_5 = rossubscriber('/vicon/turtlebot_5/turtlebot_5');
-vicon_data_5 = receive(vicon_sub_5, 1);
-vicon_data_5.Transform.Translation.X
-vicon_data_5.Transform.Translation.Y
-vicon_data_5.Transform.Rotation.Z
-
-vicon_sub_3 = rossubscriber('/vicon/turtlebot_3/turtlebot_3');
-vicon_data_3 = receive(vicon_sub_3, 1);
-vicon_data_3.Transform.Translation.X
-vicon_data_3.Transform.Translation.Y
-vicon_data_3.Transform.Rotation.Z
-
-
 path1X = [];
 path2X = [];
 path3X = [];
 XerrorList1 = [];
 XerrorList2 = [];
 XerrorList3 = [];
-
 
 path1Y = [];
 path2Y = [];
@@ -65,6 +45,23 @@ pub1 = rospublisher('/tb2_2/mobile_base/commands/velocity') ;
 pub2 = rospublisher('/tb2_3/mobile_base/commands/velocity') ;
 pub3 = rospublisher('/tb2_5/mobile_base/commands/velocity') ;
 
+vicon_sub_2 = rossubscriber('/vicon/turtlebot_2/turtlebot_2');
+vicon_data_2 = receive(vicon_sub_2, 1);
+vicon_data_2.Transform.Translation.X
+vicon_data_2.Transform.Translation.Y
+vicon_data_2.Transform.Rotation.Z
+
+vicon_sub_5 = rossubscriber('/vicon/turtlebot_5/turtlebot_5');
+vicon_data_5 = receive(vicon_sub_5, 1);
+vicon_data_5.Transform.Translation.X
+vicon_data_5.Transform.Translation.Y
+vicon_data_5.Transform.Rotation.Z
+
+vicon_sub_3 = rossubscriber('/vicon/turtlebot_3/turtlebot_3');
+vicon_data_3 = receive(vicon_sub_3, 1);
+vicon_data_3.Transform.Translation.X
+vicon_data_3.Transform.Translation.Y
+vicon_data_3.Transform.Rotation.Z
 
 decay = 0.8;
 M=0;
@@ -85,33 +82,39 @@ k = 1;
 path.pose = [2 -2 1]';
 path.estimate = [2 -2 1]';
 path.u = [2 2];
-bot(1).pose = [0.1526 -1.5174 pi/2]';
-bot(1).estimate = [0.1526 -1.5175 pi/2]';
-bot(1).u = [2 2];
-pathbot1.pose = [0.1526 -1.5174 pi/2]';
-pathbot1.estimate = [0.1526 -1.5174 pi/2]';
-pathbot1.u = [2 2];
-pathbot2.pose = [0.5421 -2.2795 pi/2]';
-pathbot2.estimate = [0.5421 -2.2795 pi/2]';
-pathbot2.u = [2 2];
-pathbot3.pose = [-0.1778 -2.3472 pi/2]';
-pathbot3.estimate = [-0.1778 -2.3472 pi/2]';
-pathbot3.u = [2 2];
 
-bot(2).pose = [0.5421 -2.2795 pi/2]';
-bot(2).estimate = [0.5421 -2.2795 pi/2]';
+bot(1).pose = [vicon_data_2.Transform.Translation.X vicon_data_2.Transform.Translation.Y vicon_data_2.Transform.Rotation.Z]';
+bot(1).estimate = [vicon_data_2.Transform.Translation.X vicon_data_2.Transform.Translation.Y vicon_data_2.Transform.Rotation.Z]';
+bot(1).u = [2 2];
+
+bot(2).pose = [vicon_data_3.Transform.Translation.X vicon_data_3.Transform.Translation.Y vicon_data_3.Transform.Rotation.Z]';
+bot(2).estimate = [vicon_data_3.Transform.Translation.X vicon_data_3.Transform.Translation.Y vicon_data_3.Transform.Rotation.Z]';
 bot(2).u = [2 2];
 
-bot(3).pose = [-0.1778 -2.3472 pi/2]';
-bot(3).estimate = [-0.1778 -2.3472 pi/2]';
+bot(3).pose = [vicon_data_5.Transform.Translation.X vicon_data_5.Transform.Translation.Y vicon_data_5.Transform.Rotation.Z]';
+bot(3).estimate = [vicon_data_5.Transform.Translation.X vicon_data_5.Transform.Translation.Y vicon_data_5.Transform.Rotation.Z]';
 bot(3).u = [2 2];
+
+pathbot1.pose =  [vicon_data_2.Transform.Translation.X vicon_data_2.Transform.Translation.Y vicon_data_2.Transform.Rotation.Z]';
+pathbot1.estimate =   [vicon_data_2.Transform.Translation.X vicon_data_2.Transform.Translation.Y vicon_data_2.Transform.Rotation.Z]';
+pathbot1.u = [2 2];
+
+pathbot2.pose = [vicon_data_3.Transform.Translation.X vicon_data_3.Transform.Translation.Y vicon_data_3.Transform.Rotation.Z]';
+pathbot2.estimate = [vicon_data_3.Transform.Translation.X vicon_data_3.Transform.Translation.Y vicon_data_3.Transform.Rotation.Z]';
+pathbot2.u = [2 2];
+
+pathbot3.pose = [vicon_data_5.Transform.Translation.X vicon_data_5.Transform.Translation.Y vicon_data_5.Transform.Rotation.Z]';
+pathbot3.estimate = [vicon_data_5.Transform.Translation.X vicon_data_5.Transform.Translation.Y vicon_data_5.Transform.Rotation.Z]';
+pathbot3.u = [2 2];
+
+
 
 XerrorList = [];
 YerrorList = [];
 ThetaErrorList = [];
 mXHist = [];
 %[x y uL uR cos sin omega]'
-tMax = 20;
+tMax = 10;
 dt = 1;
 ti = 1;
 %SS = cell(numBots, tMax);
@@ -126,13 +129,13 @@ for t = 1:dt:tMax
    kalman(pathbot2, dt);
    update(pathbot3, dt);
    kalman(pathbot3, dt);
-%     if t ==1
-%         fail(path2(1))
-%     end
-%    
-%    if t== 2
-%        recover(path2(1))
-%    end
+    if t ==1
+        fail(pathbot1)
+    end
+   
+   if t== 3
+       recover(pathbot1)
+   end
    pathbot1.estimate(3) = t/10;
    path1X = [path1X, pathbot1.estimate(1)];
    path1Y = [path1Y, pathbot1.estimate(2)];
@@ -163,26 +166,28 @@ end
 %Global time loop
 for t = 1:dt:tMax
 
-for i = 1:numBots
+
    %Update SS
    %error calculations
    if t == 1
     fail(bot(1));
    end
    
-   if t == 2
+   if t == 3
     recover(bot(1));
    end
    
    
-   vicon_data_2 = receive(vicon_sub_2, 1);
-vicon_data_2.Transform.Translation.X
-vicon_data_2.Transform.Translation.Y
-vicon_data_2.Transform.Rotation.Z
+
 
    %SS(i, t) = bot(i).pose;
-   update(bot(i), dt);
-   kalman(bot(i), dt);
+   update(bot(1), dt);
+   kalman(bot(1), dt);
+   update(bot(2), dt);
+   kalman(bot(2), dt);
+   update(bot(3), dt);
+   kalman(bot(3), dt);
+   
    
    Xerror = ((path.estimate(1) - bot(1).estimate(1)).^2)./((k^2).*bot(1).P(1,1));
    %disp(Xerror)
@@ -327,7 +332,7 @@ end
 % 
 % %fprintf("t: %f | Gamma: %f | Weighted: %f \n",t,Gamma,Gammaw)
 % % 
-% % Plotting Current Trust Value
+% Plotting Current Trust Value
 % figure(2);
 % hold on
 % plot(t, Gamma, 'go','MarkerSize',5)
@@ -335,11 +340,11 @@ end
 % plot(t,Trust,'ro','MarkerSize',5)
 % title('Reputation (gamma)');
 % legend('Reputation-based Trust', 'Reputation & Trend-based Trust');
-% %plot(t,GammaDecay,'r^','MarkerSize',5)
+%plot(t,GammaDecay,'r^','MarkerSize',5)
+
 % 
-% % 
-% % plot(t,Trend*Gamma,'bd','MarkerSize',5)
-% 
+% plot(t,Trend*Gamma,'bd','MarkerSize',5)
+
 %  figure(3);
 % % plot(t, S, 'or','MarkerSize',5)
 %  hold on
@@ -353,7 +358,7 @@ end
 % % figure(Mplot);
 % % plot(t,M(end),'k*','MarkerSize',5)
 % hold on
-end
+
 rosshutdown;
 % figure(RepPlot)
 % grid on
@@ -376,12 +381,12 @@ rosshutdown;
 
 %system functions
 function fail(rob)
-rob.u = [2 1.9];
+rob.u = [2 1.6];
 
 end
 
 function recover(rob)
-rob.u = [2 2.1];
+rob.u = [2 2.4];
 end
 
 function rotate (relative_angle, pub)
@@ -403,7 +408,7 @@ end
 function drive(target_distance, pub)
     %vars for traveling forward
     
-    linear_speed = .1; %m/s
+    linear_speed = .25; %m/s
     distance_travelled = 0;
     r = rosrate(10);
     reset(r);
