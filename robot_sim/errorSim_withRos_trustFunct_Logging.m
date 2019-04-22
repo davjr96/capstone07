@@ -3,72 +3,101 @@ close all;
 
 %%%Time Setup%%%
 kMax=10;
-ti = 1;
 dt = 1;
 
-
 numBots = 3;
-path = robot4;
-path.init(1,3,kMax);
+
+pathbot(1,numBots) = robot4;
+
+pathX = zeros(numBots,kMax);
+pathY = zeros(numBots,kMax);
+pathT = zeros(numBots,kMax);
+
+
 bot(1, numBots) = robot4;
-rosOn = 0;
+rosOn = 1;
 decay = 0.8;
 
 for b = 1:numBots
     bot(b).init(numBots, 3,kMax); %%%history we keep, numBots, state space
+    pathbot(b).init(numBots, 3,kMax);
 end
-
-path.pose = [0 0 pi/2]';
-path.estimate = [0 -2 pi/2]';
-path.u = [2 2];
 
 bot(1).pose = [1 0 pi/2]';
 bot(1).estimate = [1 0 pi/2]';
-bot(1).u = [2 2];
+bot(1).u = [.1 .1];
 
 bot(2).pose = [2 0 pi/2]';
 bot(2).estimate = [2 0 pi/2]';
-bot(2).u = [2 2];
+bot(2).u = [.1 .1];
 
 bot(3).pose = [3 0 pi/2]';
 bot(3).estimate = [3 0 pi/2]';
-bot(3).u = [2 2];
+bot(3).u = [.1 .1];
+
+pathbot(1).pose = [1 0 pi/2]';
+pathbot(1).estimate = [1 0 pi/2]';
+pathbot(1).u = [.1 .1];
+
+pathbot(2).pose = [2 0 pi/2]';
+pathbot(2).estimate = [2 0 pi/2]';
+pathbot(2).u = [.1 .1];
+
+pathbot(3).pose = [3 0 pi/2]';
+pathbot(3).estimate = [3 0 pi/2]';
+pathbot(3).u = [.1 .1];
+
 
 if rosOn == 1
     ipaddress = "192.168.8.250";
     rosinit(ipaddress);
-    pub1 = rospublisher('/tb2_2/mobile_base/commands/velocity') ;
-    pub2 = rospublisher('/tb2_3/mobile_base/commands/velocity') ;
-    pub3 = rospublisher('/tb2_5/mobile_base/commands/velocity') ;
     
-    vicon_sub_2 = rossubscriber('/vicon/turtlebot_2/turtlebot_2');
-    vicon_data_2 = receive(vicon_sub_2, 1);
     
-    vicon_sub_3 = rossubscriber('/vicon/turtlebot_3/turtlebot_3');
-    vicon_data_3 = receive(vicon_sub_3, 1);
+    pub(1) = rospublisher('/tb2_2/mobile_base/commands/velocity') ;
+    pub(2) = rospublisher('/tb2_3/mobile_base/commands/velocity') ;
+    pub(3) = rospublisher('/tb2_5/mobile_base/commands/velocity') ;
     
-    vicon_sub_5 = rossubscriber('/vicon/turtlebot_5/turtlebot_5');
-    vicon_data_5 = receive(vicon_sub_5, 1);
+    vicon_sub(1) = rossubscriber('/vicon/turtlebot_2/turtlebot_2');
+    vicon_data(1) = receive(vicon_sub(1), 1);
     
-    bot(1).pose = [vicon_data_2.Transform.Translation.X vicon_data_2.Transform.Translation.Y vicon_data_2.Transform.Rotation.Z]';
-    bot(1).estimate = [vicon_data_2.Transform.Translation.X vicon_data_2.Transform.Translation.Y vicon_data_2.Transform.Rotation.Z]';
-    bot(1).u = [2 2];
+    vicon_sub(2) = rossubscriber('/vicon/turtlebot_3/turtlebot_3');
+    vicon_data(2) = receive(vicon_sub(2), 1);
     
-    bot(2).pose = [vicon_data_3.Transform.Translation.X vicon_data_3.Transform.Translation.Y vicon_data_3.Transform.Rotation.Z]';
-    bot(2).estimate = [vicon_data_3.Transform.Translation.X vicon_data_3.Transform.Translation.Y vicon_data_3.Transform.Rotation.Z]';
-    bot(2).u = [2 2];
+    vicon_sub(3) = rossubscriber('/vicon/turtlebot_5/turtlebot_5');
+    vicon_data(3) = receive(vicon_sub(3), 1);
     
-    bot(3).pose = [vicon_data_5.Transform.Translation.X vicon_data_5.Transform.Translation.Y vicon_data_5.Transform.Rotation.Z]';
-    bot(3).estimate = [vicon_data_5.Transform.Translation.X vicon_data_5.Transform.Translation.Y vicon_data_5.Transform.Rotation.Z]';
-    bot(3).u = [2 2];
+    for i = 1:numBots
+        bot(i).pose = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y vicon_data(i).Transform.Rotation.Z]';
+        bot(i).estimate = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y vicon_data(i).Transform.Rotation.Z]';
+        bot(i).u = [.1 .1];
+        
+        pathbot(i).pose = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y vicon_data(i).Transform.Rotation.Z]';
+        pathbot(i).estimate = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y vicon_data(i).Transform.Rotation.Z]';
+        pathbot(i).u = [.1 .1];
+    end
 end
 
 %Make path
 
+for t = 1:dt:kMax
+    
+    for i = 1:numBots
+        update(pathbot(i), dt);
+        kalman(pathbot(i), dt);
+                
+        pathX(i, t) = pathbot(i).estimate(1);
+        pathY(i, t) = pathbot(i).estimate(2);
+        pathT(i, t) = pathbot(i).estimate(3);
+        
+        figure(1)
+        hold on;
+        plot(pathbot(i).estimate(1), pathbot(i).estimate(2), 'go');
+        
+    end
+end
+
 %Global time loop
-for k = 1:1:kMax
-    t=ti+k*dt
-    k
+for t = 1:dt:kMax
     for i = 1:numBots
         %Update SS
         %error calculations
@@ -83,37 +112,46 @@ for k = 1:1:kMax
         %SS(i, t) = bot(i).pose;
         update(bot(i), dt);
         kalman(bot(i), dt);
-        update(path, dt);
-        kalman(path, dt);
-        %
-        boterrb=zeros(3,3);
-        boterrc=zeros(3,3);
-        errplaneb=zeros(3,3);
-        errplanec=zeros(3,3);
+        
         errc=[];
         errb=[];
+        
+        if rosOn == 1
+            vicon_data(i) = receive(vicon_sub(i), 1);
+            bot(i).estimate(1) = vicon_data(i).Transform.Translation.X;
+            bot(i).estimate(2) = vicon_data(i).Transform.Translation.Y;
+            bot(i).estimate(3) = vicon_data(i).Transform.Rotation.Z;
+        end
+        
         for j=1:numBots
             
-            errc=bot(i).getErrorc(path.estimate, bot(i).estimate);
-            errb=bot(i).getErrorb(path.estimate, bot(i).estimate);
-            
+            errc=bot(i).getErrorc([pathX(i,t) pathY(i,t) pathT(i,t)]', bot(i).estimate);
+            errb=bot(i).getErrorb([pathX(i,t) pathY(i,t) pathT(i,t)]', bot(i).estimate);
             
             bot(i).errMatc(:,j)=errc;
             bot(i).errMatb(:,j)=errb;
-            %    bot.errMatb=boterrb;
-        end
-        bot(i).updateM(bot(i).errMatc,k, 0);
-        bot(i).updateM(bot(i).errMatb,k, 1);
         
-        bot(i).updateTrendc(k,dt);
-        bot(i).InstantTrustc(k);
-        bot(i).updateRepc(k);
-        bot(i).updateALTrustc(k);
+        end
+        bot(i).updateM(bot(i).errMatc,t, 0);
+        bot(i).updateM(bot(i).errMatb,t, 1);
+        
+        bot(i).updateTrendc(t,dt);
+        bot(i).InstantTrustc(t);
+        bot(i).updateRepc(t);
+        bot(i).updateALTrustc(t);
         %
-        bot(i).updateTrendb(k,dt);
-        bot(i).InstantTrustb(k)
-        bot(i).updateRepb(k);
-        bot(i).updateALTrustb(k);
+        bot(i).updateTrendb(t,dt);
+        bot(i).InstantTrustb(t)
+        bot(i).updateRepb(t);
+        bot(i).updateALTrustb(t);
+        
+        angle_to_travel = pathT(i, dt+1) - pathT(i, dt)
+        distance_to_travel = sqrt( (pathX(i, dt+1) - pathX(i, dt))^2 +  (pathY(i, dt+1) - pathY(i, dt))^2)
+        
+        if rosOn == 1
+            rotate(angle_to_travel , pub(i))
+            drive(distance_to_travel, pub(i) )
+        end
         
         %%%%%%%%
         figure(1)
