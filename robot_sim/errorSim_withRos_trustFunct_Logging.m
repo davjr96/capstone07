@@ -51,7 +51,7 @@ pathbot(3).u = [.1 .1];
 if rosOn == 1
     ipaddress = "192.168.8.250";
     rosinit(ipaddress);
-        
+    
     pub(1) = rospublisher('/tb2_2/mobile_base/commands/velocity') ;
     pub(2) = rospublisher('/tb2_3/mobile_base/commands/velocity') ;
     pub(3) = rospublisher('/tb2_5/mobile_base/commands/velocity') ;
@@ -85,7 +85,7 @@ for t = 1:dt:kMax
     for i = 1:numBots
         update(pathbot(i), dt);
         kalman(pathbot(i), dt);
-                
+        
         pathX(i, t) = pathbot(i).estimate(1);
         pathY(i, t) = pathbot(i).estimate(2);
         pathT(i, t) = pathbot(i).estimate(3);
@@ -121,7 +121,7 @@ for t = 1:dt:kMax
             vicon_data(i) = receive(vicon_sub(i), 1);
             heading = quat2eul([vicon_data(i).Transform.Rotation.X vicon_data(i).Transform.Rotation.Y vicon_data(i).Transform.Rotation.Z vicon_data(i).Transform.Rotation.W]);
             headingVal = heading(3);
-        
+            
             bot(i).estimate(1) = vicon_data(i).Transform.Translation.X;
             bot(i).estimate(2) = vicon_data(i).Transform.Translation.Y;
             bot(i).estimate(3) = headingVal;
@@ -134,7 +134,7 @@ for t = 1:dt:kMax
             
             bot(i).errMatc(:,j)=errc;
             bot(i).errMatb(:,j)=errb;
-        
+            
         end
         bot(i).updateM(bot(i).errMatc,t, 0);
         bot(i).updateM(bot(i).errMatb,t, 1);
@@ -157,7 +157,7 @@ for t = 1:dt:kMax
             drive(distance_to_travel, pub(i))
         end
         
-      
+        
         figure(1)
         hold on;
         plot(bot(i).estimate(1), bot(i).estimate(2), 'b^');
