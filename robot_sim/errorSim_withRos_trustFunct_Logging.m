@@ -51,8 +51,7 @@ pathbot(3).u = [.1 .1];
 if rosOn == 1
     ipaddress = "192.168.8.250";
     rosinit(ipaddress);
-    
-    
+        
     pub(1) = rospublisher('/tb2_2/mobile_base/commands/velocity') ;
     pub(2) = rospublisher('/tb2_3/mobile_base/commands/velocity') ;
     pub(3) = rospublisher('/tb2_5/mobile_base/commands/velocity') ;
@@ -67,12 +66,14 @@ if rosOn == 1
     vicon_data(3) = receive(vicon_sub(3), 1);
     
     for i = 1:numBots
-        bot(i).pose = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y vicon_data(i).Transform.Rotation.Z]';
-        bot(i).estimate = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y vicon_data(i).Transform.Rotation.Z]';
+        heading = quat2eul([vicon_data(i).Transform.Rotation.X vicon_data(i).Transform.Rotation.Y vicon_data(i).Transform.Rotation.Z vicon_data(i).Transform.Rotation.W]);
+        headingVal = heading(3);
+        bot(i).pose = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y headingVal]';
+        bot(i).estimate = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y headingVal]';
         bot(i).u = [.1 .1];
         
-        pathbot(i).pose = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y vicon_data(i).Transform.Rotation.Z]';
-        pathbot(i).estimate = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y vicon_data(i).Transform.Rotation.Z]';
+        pathbot(i).pose = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y headingVal]';
+        pathbot(i).estimate = [vicon_data(i).Transform.Translation.X vicon_data(i).Transform.Translation.Y headingVal]';
         pathbot(i).u = [.1 .1];
     end
 end
@@ -118,9 +119,12 @@ for t = 1:dt:kMax
         
         if rosOn == 1
             vicon_data(i) = receive(vicon_sub(i), 1);
+            heading = quat2eul([vicon_data(i).Transform.Rotation.X vicon_data(i).Transform.Rotation.Y vicon_data(i).Transform.Rotation.Z vicon_data(i).Transform.Rotation.W]);
+            headingVal = heading(3);
+        
             bot(i).estimate(1) = vicon_data(i).Transform.Translation.X;
             bot(i).estimate(2) = vicon_data(i).Transform.Translation.Y;
-            bot(i).estimate(3) = vicon_data(i).Transform.Rotation.Z;
+            bot(i).estimate(3) = headingVal;
         end
         
         for j=1:numBots
@@ -150,13 +154,11 @@ for t = 1:dt:kMax
         
         if rosOn == 1
             rotate(angle_to_travel , pub(i))
-            drive(distance_to_travel, pub(i) )
+            drive(distance_to_travel, pub(i))
         end
         
-        %%%%%%%%
+      
         figure(1)
-        % plot(path.pose(1), path.pose(2), 'g^');
-        %plot(bot(i).pose(1),bot(i).pose(2),'r*');%,plot_matrix(2,n),plot_matrix(3,k), 'b'); hold on; %plotting x and y of the actual simulation
         hold on;
         plot(bot(i).estimate(1), bot(i).estimate(2), 'b^');
         legend('Goal Path','Robot Position');
@@ -164,89 +166,13 @@ for t = 1:dt:kMax
         title('Position');
         pause(.000001);
         
-        %title('Actual vs Measurement')
-        %legend({' = Robot 1', ' = Robot 2'})
-        %  xlim([-5 40]);
-        %  ylim([-5 40]);
-        % xlabel('Position X (m)')
-        % ylabel('Position Y (m)')
-        
     end
 end
 
-%new time loop, then try to catch the failure. Compare direction, check
-%error between timesteps, and adjust/speed up to reduce error
-
-
-%disp(M);
-
-
-
-
-
-%  figure(4)
-%  hold on
-%   plot(1:length(XerrorList), XerrorList, 'r*');
-%   plot(1:length(YerrorList), YerrorList, 'b*');
-%   plot(1:length(ThetaErrorList), ThetaErrorList, 'g*');
-%  %plot(1:length(mXHist), mXHist, 'g^');
-%  legend('X Error', 'Y Error', 'Theta Error');
-%  legend('location', 'northwest');
-%
-%  title('Error');
-
-
-%fprintf("t: %f | Gamma: %f | Weighted: %f \n",t,Gamma,Gammaw)
-%
-% Plotting Current Trust Value
-% figure(2);
-% hold on
-% %plot(1:length(XerrorList), Gamma, 'go','MarkerSize',5)
-%
-% plot(t*10,Gammaw,'ro','MarkerSize',5)
-% title('Reputation (gamma)');
-% legend('Gamma');
-%plot(t,GammaDecay,'r^','MarkerSize',5)
-
-%
-% plot(t,Trend*Gamma,'bd','MarkerSize',5)
-%
-%  figure(3);
-% % plot(t, S, 'or','MarkerSize',5)
-%  hold on
-%  plot(t,Trend,'r.','MarkerSize',5)
-%  title('Trend');
-
-% plot(t,Trend2,'m.','MarkerSize',5)
-% plot(t,U,'ob','MarkerSize',5)
-% % plot(t,Trend,'k*')
-%
-% figure(Mplot);
-% plot(t,M(end),'k*','MarkerSize',5)
-% hold on
 if rosOn == 1
     rosshutdown;
 end
 
-
-% figure(RepPlot)
-% grid on
-% title("Reputation Vs. Time")
-% ylabel("Reputation (Gamma)")
-% xlabel("Time (S)")
-%legend()
-% figure(SUPlot)
-% grid on
-% title("Successful/Unsuccessful Counts Vs. Time")
-% ylabel("Counts")
-% xlabel("Time (S)")
-% legend("Successful","Unsuccessful");
-% figure(Mplot)
-% grid on
-% title("Normalized Error Vs. Time")
-% ylabel("Normalized Error (M)")
-% xlabel("Time (S)")
-% plot([ti,tMax],[1,1],'k--')
 
 %system functions
 function fail(rob)
