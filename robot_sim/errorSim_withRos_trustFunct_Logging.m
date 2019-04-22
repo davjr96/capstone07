@@ -174,6 +174,7 @@ if rosOn == 1
 end
 
 
+
 %system functions
 function fail(rob)
 rob.u = [2 1.9];
@@ -203,7 +204,7 @@ end
 function drive(target_distance, pub)
 %vars for traveling forward
 
-linear_speed = .25; %m/s
+linear_speed = .1; %m/s
 distance_travelled = 0;
 r = rosrate(10);
 reset(r);
