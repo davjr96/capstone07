@@ -86,6 +86,8 @@ for t = 1:dt:kMax
         update(pathbot(i), dt);
         kalman(pathbot(i), dt);
         
+        
+        
         pathX(i, t) = pathbot(i).estimate(1);
         pathY(i, t) = pathbot(i).estimate(2);
         pathT(i, t) = pathbot(i).estimate(3);
@@ -149,8 +151,8 @@ for t = 1:dt:kMax
         bot(i).updateRepb(t);
         bot(i).updateALTrustb(t);
         
-        angle_to_travel = pathT(i, dt+1) - pathT(i, dt)
-        distance_to_travel = sqrt( (pathX(i, dt+1) - pathX(i, dt))^2 +  (pathY(i, dt+1) - pathY(i, dt))^2)
+        angle_to_travel = pathT(i, dt+1) - pathT(i, dt);
+        distance_to_travel = sqrt( (pathX(i, dt+1) - pathX(i, dt))^2 +  (pathY(i, dt+1) - pathY(i, dt))^2);
         
         if rosOn == 1
             rotate(angle_to_travel , pub(i))
@@ -166,12 +168,42 @@ for t = 1:dt:kMax
         title('Position');
         pause(.000001);
         
+        disp('estimate')
+        disp(i)
+        bot(i).estimate
+        
     end
 end
 
 if rosOn == 1
     rosshutdown;
 end
+%Mc
+Mcplots=figure;
+figure(Mcplots);
+Mcs=cell(1,3);
+for i=1:3
+   Mcs{i}=zeros(3,kMax);
+   for k=1:kMax
+       Mcs{i}(:,k)=bot(i).Mc{k}(:,i);
+   end
+end
+hold on
+bot1Mcx=plot(1:kMax,Mcs{1}(1,:));
+bot1Mcy=plot(1:kMax,Mcs{1}(2,:));
+bot1Mct=plot(1:kMax,Mcs{1}(3,:));
+%Tinst
+Tinstcplots=figure;
+figure(Tinstcplots);
+Tinstcs=cell(1,3);
+for i=1:3
+   Tinstcs{i}=zeros(3,kMax);
+   for k=1:kMax
+       Tinstcs{i}(:,k)=bot(i).Tinstc{k};
+   end
+end
+hold on
+bot1Tinstc=plot(1:kMax,Tinstcs{1});
 
 
 
@@ -195,7 +227,7 @@ velmsg.Angular.Z = angular_speed;
 while(current_angle < relative_angle)
     time = r.TotalElapsedTime;
     send(pub,velmsg);
-    current_angle = current_angle + angular_speed * .1
+    current_angle = current_angle + angular_speed * .1;
     waitfor(r);
 end
 velmsg.Angular.Z = 0;
