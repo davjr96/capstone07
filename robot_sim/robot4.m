@@ -3,7 +3,7 @@ classdef robot4 < handle
         %kMax = 2500;
         %deltaT = 0.1; %sec
         
-        k = 1;
+        K = 1;
         
         N = 0; %network size
         n = 0; %dimension of the state vector
@@ -15,7 +15,7 @@ classdef robot4 < handle
         radius = 1; %m
         
         P = zeros(3,3);
-        variance_speed = 0.001;
+        variance_speed = 0.0001;
         Q = [];
         
         variance_gps = 5;
@@ -34,6 +34,9 @@ classdef robot4 < handle
         %        Fl = 0;
         
         E = [];
+        
+        poses={};
+        ests={};
         
         %For Behavioral Trust
         Mb={}
@@ -73,6 +76,8 @@ classdef robot4 < handle
             rob.n=n;
             rob.Q = eye(3) * rob.variance_speed;
             rob.R = eye(3)*rob.variance_gps;
+            rob.ests=cell(1,kMax);
+            rob.poses=cell(1,kMax);
             %%%Communication Vars%%%
             rob.Mc = cell(1,kMax);
             rob.Tinstc = cell(1,kMax);
@@ -97,6 +102,8 @@ classdef robot4 < handle
             
             %Sizing
             for h=1:kMax
+                rob.poses{h}=zeros(n);
+                rob.ests{h}=zeros(n);
                 %Comms
                 rob.Tinstc{h} = zeros(1,N);
                 rob.Trendc{h} = zeros(1,N);
@@ -123,15 +130,18 @@ classdef robot4 < handle
         end
         
         function err=getErrorc(rob, goalPose, robPose)
-            
-            Xerrorc = ((goalPose(1) - robPose(1)).^2)./((rob.k^2).*rob.P(1,1));
+%             disp("rob")
+%             disp(robPose);
+%             disp("goal")
+%             disp(goalPose);
+            Xerrorc = ((goalPose(1) - robPose(1)).^2)./((rob.K^2).*rob.P(1,1));
             %disp(Xerror)
             
             %disp(XerrorList')
             
-            Yerrorc = ((goalPose(2) - robPose(2)).^2)./((rob.k^2).*rob.P(2 , 2));%.^2);
+            Yerrorc = ((goalPose(2) - robPose(2)).^2)./((rob.K^2).*rob.P(2 , 2));%.^2);
             
-            ThetaErrorc = ((goalPose(3) - robPose(3)).^2)./((rob.k^2).*rob.P(3 , 3));%.^2);
+            ThetaErrorc = ((goalPose(3) - robPose(3)).^2)./((rob.K^2).*rob.P(3 , 3));%.^2);
             
             
             %Tuning happens here
@@ -139,14 +149,14 @@ classdef robot4 < handle
         end
         function err=getErrorb(rob, goalPose, robPose)
             
-            Xerrorb = ((goalPose(1) - robPose(1)).^2)./((rob.k^2).*rob.P(1,1));
+            Xerrorb = ((goalPose(1) - robPose(1)).^2)./((rob.K^2).*rob.P(1,1));
             %disp(Xerror)
             
             %disp(XerrorList')
             
-            Yerrorb = ((goalPose(2) - robPose(2)).^2)./((rob.k^2).*rob.P(2 , 2));%.^2);
+            Yerrorb = ((goalPose(2) - robPose(2)).^2)./((rob.K^2).*rob.P(2 , 2));%.^2);
             
-            ThetaErrorb = ((goalPose(3) - robPose(3)).^2)./((rob.k^2).*rob.P(3 , 3));%.^2);
+            ThetaErrorb = ((goalPose(3) - robPose(3)).^2)./((rob.K^2).*rob.P(3 , 3));%.^2);
             
             
             %Tuning happens here
@@ -200,7 +210,8 @@ classdef robot4 < handle
         
         function InstantTrustc(rob,k)
             %Selecting relevant M
-            M_curr = rob.Mc{1}(:,:);
+            M_curr = rob.Mc{k}(:,:);
+            disp(M_curr);
             %            s=size(rob.Mc);
             T=zeros(rob.N,rob.n);
             for agent=1:rob.N
@@ -290,6 +301,10 @@ classdef robot4 < handle
         
         
         %%%Update Pose
+        function setVelocity(rob,error)
+            Gain=[-.01 .01 .01;.01 .01 -.01];
+            rob.u=Gain*error;
+        end
         function update(rob, dt)
             %update the 'actual' pose:
             
@@ -299,8 +314,7 @@ classdef robot4 < handle
                     
                 end
             end
-            
-            rob.pose = rob.pose + dt*[(rob.u(1) + rob.u(2)) * cos(rob.pose(3)) / 2;
+            rob.pose= rob.pose + dt*[(rob.u(1) + rob.u(2)) * cos(rob.pose(3)) / 2;
                 (rob.u(1) + rob.u(2)) * sin(rob.pose(3)) / 2;
                 (rob.u(1) - rob.u(2))/(2*rob.radius)];
             
@@ -342,7 +356,10 @@ classdef robot4 < handle
             rob.P = rob.P - K * H * rob.P;
         end
         
-        
+        function stateRecorder(rob,k)
+           rob.ests{k}=rob.estimate;
+           rob.poses{k}=rob.pose;
+        end
         
         
     end

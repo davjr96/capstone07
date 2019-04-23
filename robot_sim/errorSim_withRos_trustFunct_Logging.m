@@ -14,8 +14,9 @@ pathY = zeros(numBots,kMax);
 pathT = zeros(numBots,kMax);
 
 
+
 bot(1, numBots) = robot4;
-rosOn = 1;
+rosOn = 0;
 decay = 0.8;
 
 for b = 1:numBots
@@ -103,18 +104,20 @@ end
 for t = 1:dt:kMax
     for i = 1:numBots
         %Update SS
-        %error calculations
-        %    if t == 5
-        %     fail(bot(1));
-        %    end
-        %
-        %    if t == 10
-        %     recover(bot(1));
-        %    end
+%         error calculations
+           if t == 5
+            fail(bot(1));
+           end
+        
+           if t == 10
+            recover(bot(1));
+           end
         
         %SS(i, t) = bot(i).pose;
         update(bot(i), dt);
         kalman(bot(i), dt);
+        
+        bot(i).stateRecorder(t);
         
         errc=[];
         errb=[];
@@ -124,15 +127,15 @@ for t = 1:dt:kMax
             heading = quat2eul([vicon_data(i).Transform.Rotation.X vicon_data(i).Transform.Rotation.Y vicon_data(i).Transform.Rotation.Z vicon_data(i).Transform.Rotation.W]);
             headingVal = heading(3);
             
-            bot(i).estimate(1) = vicon_data(i).Transform.Translation.X;
-            bot(i).estimate(2) = vicon_data(i).Transform.Translation.Y;
-            bot(i).estimate(3) = headingVal;
+            bot(i).ests(t, 1)= vicon_data(i).Transform.Translation.X;
+            bot(i).ests(t, 2) = vicon_data(i).Transform.Translation.Y;
+            bot(i).ests(t, 3) = headingVal;
         end
         
         for j=1:numBots
             
-            errc=bot(i).getErrorc([pathX(i,t) pathY(i,t) pathT(i,t)]', bot(i).estimate);
-            errb=bot(i).getErrorb([pathX(i,t) pathY(i,t) pathT(i,t)]', bot(i).estimate);
+            errc=bot(i).getErrorc([pathX(i,t) pathY(i,t) pathT(i,t)]', bot(i).ests{t});
+            errb=bot(i).getErrorb([pathX(i,t) pathY(i,t) pathT(i,t)]', bot(i).ests{t});
             
             bot(i).errMatc(:,j)=errc;
             bot(i).errMatb(:,j)=errb;
@@ -178,32 +181,21 @@ end
 if rosOn == 1
     rosshutdown;
 end
+
 %Mc
 Mcplots=figure;
 figure(Mcplots);
 Mcs=cell(1,3);
 for i=1:3
-   Mcs{i}=zeros(3,kMax);
-   for k=1:kMax
-       Mcs{i}(:,k)=bot(i).Mc{k}(:,i);
-   end
+    Mcs{i}=zeros(3,kMax);
+    for k=1:kMax
+        Mcs{i}(:,k)=bot(i).Mc{k}(:,i);
+    end
 end
 hold on
 bot1Mcx=plot(1:kMax,Mcs{1}(1,:));
 bot1Mcy=plot(1:kMax,Mcs{1}(2,:));
 bot1Mct=plot(1:kMax,Mcs{1}(3,:));
-%Tinst
-Tinstcplots=figure;
-figure(Tinstcplots);
-Tinstcs=cell(1,3);
-for i=1:3
-   Tinstcs{i}=zeros(3,kMax);
-   for k=1:kMax
-       Tinstcs{i}(:,k)=bot(i).Tinstc{k};
-   end
-end
-hold on
-bot1Tinstc=plot(1:kMax,Tinstcs{1});
 
 
 
